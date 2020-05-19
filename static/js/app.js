@@ -9,7 +9,7 @@ d3.json("../data/samples.json").then(function(data){
 // Use otu_ids as the labels for the bar chart.
 // Use otu_labels as the hovertext for the chart.
 
-// Select sample_values, otu_ids, otu_labels
+// Select html location for sample_values, otu_ids, otu_labels
 var selectD = d3.select('#selDataset');
 
 // reference https://github.com/d3/d3-selection
@@ -35,6 +35,8 @@ d3.json("../data/samples.json").then(function(data){
 
 function optionChanged(id){
     if (id != "") {
+        builtDemdata(id);
+
     d3.json("../data/samples.json").then(function(data){
         valueAll=data.samples;
 
@@ -126,16 +128,18 @@ function optionChanged(id){
         });
 
         //create bubble chart
+        // reference https://plotly.com/javascript/bubble-charts/#bubble-size-scaling-on-charts
         var trace2={
             x: otuIds10n,
             y: sampleValue10,
             text: otuLabels10,
             mode: 'markers',
             marker: {
-                color: colors,
+                color: otuIds10n,
                 size:sampleValue10,
                 sizeref: 0.02,
-                sizemode: 'area'
+                sizemode: 'area',
+                colorscale: 'Earth'
             }
         };
         var data22=[trace2];
@@ -152,5 +156,26 @@ function optionChanged(id){
     })
 }
 };
+
+
+//Display the sample metadata, i.e., an individual's demographic information.
+//Display each key-value pair from the metadata JSON object somewhere on the page.
+
+// reference https://github.com/d3/d3-selection
+function builtDemdata(sample){
+    d3.json("../data/samples.json").then(function(data){
+        var valueMeta=data.metadata;
+        var resultArray=valueMeta.filter(object => object.id == sample);
+        var result = resultArray[0];
+
+// Select html location for demographic information
+    var selectDem = d3.select('#sample-metadata');
+    selectDem.html(" ");
+
+    Object.entries(result).forEach(([key,value])=>{
+        selectDem.append("h6").text(`${key.toUpperCase()}: ${value}`);
+    });
+});
+}
 
 
