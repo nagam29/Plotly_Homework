@@ -18,6 +18,7 @@ function builtDropdown(data){
     var optionTag=selectD.append('option')
     .text('Select subject ID')
     .attr("value","");
+    
     data.forEach((eachPerson) => {
         var optionTag=selectD.append('option')
             .text(eachPerson.id)
@@ -28,7 +29,7 @@ function builtDropdown(data){
 d3.json("../data/samples.json").then(function(data){
     valueAll=data.samples;
     console.log(valueAll);
-
+    
     builtDropdown(valueAll);
 });
 
@@ -55,17 +56,24 @@ function optionChanged(id){
         // take otu_ids from filterData
          var otuIds=filterData.map(data1 => data1.otu_ids);
 
-        // get the first 10 items for plotting
+        // get the first 10 otu_id items for plotting. Convert the numbers to string
         var otuIds10=otuIds[0].slice(0,10);
         console.log(otuIds10);
-        otuIds10=otuIds10.map(function(otu){ console.log(otu);
+        otuIds10c=otuIds10.map(function(otu){ console.log(otu);
             otu= 'OTU'+ otu.toString();
+            console.log(otu);
+            return otu;
+        });
+
+        // get the first 10 otu_id items for plotting. Keep numbers as is for bubble chart
+        otuIds10n=otuIds10.map(function(otu){ console.log(otu);
+            //otu= 'OTU'+ otu.toString();
             console.log(otu);
             return otu;
         });
         
         //otu_ids is in [Array(44)]-- array within array
-        console.log(otuIds10);
+        //console.log(otuIds10c);
 
         // take otu_labels from filterData
         var otuLabels=filterData.map(data1 => data1.otu_labels);
@@ -79,7 +87,7 @@ function optionChanged(id){
 
         var trace1={
             x: sampleValue10,
-            y: otuIds10,
+            y: otuIds10c,
             text: otuLabels10,
             type: 'bar',
             orientation: 'h'
@@ -88,7 +96,7 @@ function optionChanged(id){
         var data2=[trace1];
 
         var layout={
-            title: 'Top 10 OTUs found in an individual',
+            title: 'Chart1: Top 10 OTUs for an individual',
             hight: 600,
             base: 0,
             xaxis: {title: 'Bacteria Count'},
@@ -96,64 +104,53 @@ function optionChanged(id){
 
         };
         Plotly.newPlot("bar", data2, layout); 
+
+        // automating to add color to bubblr chart
+        // Ployly takes rgb for deciding color like 'rgb(93, 164, 214)'
+        // Determine these 3 colors using the method below
+        // 1. rgb ranges between 0 and 255. Take a starting value as 15 (arbitrary)
+        // 2. take each otu_id number, devide this by 15, and get a remainder. rgb values are integer, so take floor of the remainder
+        // 3. Remainder tends to be small (darker color), so multiply it by scaleup value
+        // 4. g (middle value of rgb) is determined by otuid/n, and repeat the step 2 and 3 for determining the value
+        // 5. b value ( the last value of rgb) is determined by the same way as step 4.
+        // 6. map returns an array of string value for rgb through concatenating rgb, ( , r , g , b ).  This string value array is stored in colors.
+        var colors = otuIds10n.map(otuid => {
+            var n = 15;
+            var scaleup = 255/n;
+            var r = Math.floor((otuid % n)*scaleup);
+            otuid = (otuid/n);
+            var g = Math.floor((otuid % n)*scaleup);
+            otuid = (otuid/n);
+            var b = Math.floor((otuid % n)*scaleup);
+            return 'rgb' + '(' + r + ', ' + g + ', ' + b +')';
+        });
+
+        //create bubble chart
+        var trace2={
+            x: otuIds10n,
+            y: sampleValue10,
+            text: otuLabels10,
+            mode: 'markers',
+            marker: {
+                color: colors,
+                size:sampleValue10,
+                sizeref: 0.02,
+                sizemode: 'area'
+            }
+        };
+        var data22=[trace2];
+
+        var layout2={
+            title: 'Chart2: Top 10 OTUs for an individual', 
+            xaxis: {title: 'Bacteria ID'},
+            showlegend: false,
+            height:600,
+            width:1000
+        };
+        Plotly.newPlot("bubble",data22,layout2);
+
     })
 }
 };
 
-// Call updatePlotly() when a change takes place to the DOM
-//d3.selectAll("#selDataset").on("change", updatePlotly);
 
-/*
-    // Sort valueAll by sample_values, descending order 
-    var sortedValueAll=valueAll.sort((a,b) => b.sample_values - a.sample_values);
-    console.log(sortedValueAll);
-
-    // Slice the first 10 objects for plotting
-    slicedData = sortedValueAll.slice(0, 10);
-    console.log(slicedData);
-
-*/
-/*
-    // take sample_values from SlicedData
-    slicedSampleValue=slicedData.map(data1=>data1.sample_values);
-    console.log(slicedSampleValue);
-
-    // Reverse the sample_values array to accommodate Plotly's defaults
-    reversedSampleValue = slicedSampleValue.reverse();   
-    console.log(reversedSampleValue);
-    
-    //take otu_ids from SlicedData
-    slicedOtuIds=slicedData.map(data1=>data1.otu_ids);
-    console.log(slicedOtuIds);
-
-    // Reverse the otu_ids array to accommodate Plotly's defaults
-    reversedOtuIds = slicedOtuIds.reverse();   
-    console.log(reversedOtuIds);
-
-    //take otu_labels from SlicedData
-    slicedOtuLabels=slicedData.map(data1=>data1.otu_labels);
-    console.log(slicedOtuLabels);
-
-    // Reverse the otu_ids array to accommodate Plotly's defaults
-    reversedOtuLabels = slicedOtuLabels.reverse();   
-    console.log(reversedOtuLabels);
-
-    // create trace
-
-    var trace1={
-        x: reversedSampleValue,
-        y: reversedOtuIds,
-        text: reversedOtuLabels,
-        type: 'bar',
-        orientation: 'h'
-    };
-    console.log(trace1);
-
-    var data2=[trace1];
-
-    var layout={
-        title: 'Top 10 OTUs found in an individual',
-    };
-    Plotly.newPlot("bar", data2, layout); 
-    */
- 
