@@ -135,11 +135,11 @@ function optionChanged(id){
             text: otuLabels10,
             mode: 'markers',
             marker: {
-                color: otuIds10n,
+                color: colors,
                 size:sampleValue10,
                 sizeref: 0.02,
                 sizemode: 'area',
-                colorscale: 'Earth'
+               /* colorscale: 'Earth'*/
             }
         };
         var data22=[trace2];
